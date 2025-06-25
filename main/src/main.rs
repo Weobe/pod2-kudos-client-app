@@ -18,9 +18,10 @@ use ssh_key::{
 };
 use std::fs::File;
 use std::io::Write;
+use tokio::net::TcpListener;
+use github_scraper::get_all_users;
 
-
-fn get_test_rsa_pod() -> Result<(Box<dyn Pod>, VDSet)> {
+fn get_rsa_pod(path: String) -> Result<(Box<dyn Pod>, VDSet)> {
     let params = Params {
         max_input_signed_pods: 0,
         ..Default::default()
@@ -41,7 +42,7 @@ fn get_test_rsa_pod() -> Result<(Box<dyn Pod>, VDSet)> {
     // Use the sample data from plonky2_rsa
     let msg = "0xPARC\n";
     let namespace = "double-blind.xyz";
-    let sig = SshSig::from_pem(include_bytes!("../test_keys/id_rsa_example.sig")).unwrap();
+    let sig = SshSig::from_pem(include_bytes!("../signature/id_rsa.sig")).unwrap();
     let vds_root = vdset.root();
 
     let rsa_pod = timed!(
@@ -51,20 +52,27 @@ fn get_test_rsa_pod() -> Result<(Box<dyn Pod>, VDSet)> {
     Ok((rsa_pod, vdset))
 }
 
-
-fn main() {
-    let (_rsa_pod, _vdset) = get_test_rsa_pod().map_err(|e| {
-        eprintln!("Error creating RSA pod: {}", e);
-        std::process::exit(1);
-    }).unwrap();
-    print!("RSA Pod created successfully!\n");
-    let mut pod_file = File::create("rsa_pod.json")
-        .expect("Failed to create file");
-    pod_file.write(format!("{_rsa_pod:?}\n").as_bytes())
-        .expect("Failed to write to file");
-    let mut vd_file = File::create("rsa_vd.json")
-        .expect("Failed to create file");
-    vd_file.write(format!("{_vdset:?}\n").as_bytes())
-        .expect("Failed to write to file");
-    println!("RSA Pod and VDSet written to files successfully!\n");
+#[tokio::main]
+async fn main() {
+     let user_list: Vec<String> = vec![
+            "Weobe".to_string(),
+            "psquare1".to_string(),
+            "lizahorokh".to_string(),
+    ];
+    let pks = get_all_users(user_list).await;
+    println!("Public keys: {:?}", pks);
+    // let (_rsa_pod, _vdset) = get_rsa_pod().map_err(|e| {
+    //     eprintln!("Error creating RSA pod: {}", e);
+    //     std::process::exit(1);
+    // }).unwrap();
+    // print!("RSA Pod created successfully!\n");
+    // let mut pod_file = File::create("rsa_pod.json")
+    //     .expect("Failed to create file");
+    // pod_file.write(format!("{_rsa_pod:?}\n").as_bytes())
+    //     .expect("Failed to write to file");
+    // let mut vd_file = File::create("rsa_vd.json")
+    //     .expect("Failed to create file");
+    // vd_file.write(format!("{_vdset:?}\n").as_bytes())
+    //     .expect("Failed to write to file");
+    // println!("RSA Pod and VDSet written to files successfully!\n");
 }

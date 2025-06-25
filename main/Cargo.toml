@@ -7,3 +7,5 @@ edition = "2024"
 introduction-pods = {git = "https://github.com/0xPARC/introduction-pods", branch="rsa-pod"}
 pod2 = { git="https://github.com/0xPARC/pod2", rev="0541817116b3d45e88f3f9965877f24791e7f298", features = ["time"]}
 ssh-key = { version = "0.6.7" }
+github_scraper = {path = "../github_scraper"}
+tokio = "1.45.1"
