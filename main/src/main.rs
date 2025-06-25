@@ -17,9 +17,10 @@ use ssh_key::{
     SshSig
 };
 use std::fs::File;
-use std::io::Write;
-use tokio::net::TcpListener;
+use std::io::{self, Read, Write};
+use serde_json;
 use github_scraper::get_all_users;
+use clap::Parser;
 
 fn get_rsa_pod(path: String) -> Result<(Box<dyn Pod>, VDSet)> {
     let params = Params {
@@ -52,15 +53,49 @@ fn get_rsa_pod(path: String) -> Result<(Box<dyn Pod>, VDSet)> {
     Ok((rsa_pod, vdset))
 }
 
+#[derive(Parser, Debug)]
+#[command(version, about, long_about = None)]
+struct Args {
+    /// Name of the person to greet
+    #[arg(short, long)]
+    manual: bool,
+}
 #[tokio::main]
 async fn main() {
-     let user_list: Vec<String> = vec![
-            "Weobe".to_string(),
-            "psquare1".to_string(),
-            "lizahorokh".to_string(),
-    ];
-    let pks = get_all_users(user_list).await;
-    println!("Public keys: {:?}", pks);
+    let cli = Args::parse();
+    let mut group_list: Vec<String> = Vec::new();
+    if (cli.manual) {
+        println!("Manually entering the list of usernames\nEnter the list of usernames. Press enter to add a username. Type 'done' when you are finished.");
+        while true{
+            let mut username = String::new();
+            io::stdin().read_line(&mut username)
+                .expect("Failed to read line");
+            let username = username.trim();
+            if username == "done" {
+                break;
+            }
+            group_list.push(username.to_string());
+        }
+        println!("Group list: {:?}", group_list);
+        let mut file = File::create("group_list.json")
+            .expect("Failed to create file");
+        let group_list_json = serde_json::to_string(&group_list)
+            .expect("Failed to serialize group list");
+        file.write_all(group_list_json.as_bytes())
+            .expect("Failed to write to file");
+        println!("Group list written to file successfully!");
+    } else{
+        let mut file= File::open("group_list.json")
+        .expect("Failed to open file");
+        let mut group_list_str = String::new();
+        file.read_to_string(&mut group_list_str)
+            .expect("Failed to read file");
+        group_list = serde_json::from_str(&group_list_str)
+            .expect(format!("Failed to parse JSON {}", &group_list_str).as_str());
+    }
+    
+    let pks = get_all_users(group_list).await;
+    //println!("Public keys: {:?}", pks);
     // let (_rsa_pod, _vdset) = get_rsa_pod().map_err(|e| {
     //     eprintln!("Error creating RSA pod: {}", e);
     //     std::process::exit(1);
