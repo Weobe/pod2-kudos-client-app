@@ -1207,6 +1207,7 @@ dependencies = [
  "github_scraper",
  "introduction-pods",
  "pod2",
+ "serde",
  "serde_json",
  "ssh-key",
  "tokio",
