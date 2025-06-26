@@ -5,10 +5,12 @@ edition = "2024"
 
 [dependencies]
 introduction-pods = {git = "https://github.com/0xPARC/introduction-pods", branch="rsa-pod"}
-pod2 = { git="https://github.com/0xPARC/pod2", rev="0541817116b3d45e88f3f9965877f24791e7f298", features = ["time"]}
+pod2 = { git="https://github.com/0xPARC/pod2", rev="115c3c11524a0426a1b74db26ea0c78bf90bddb8", features = ["time"]}
 ssh-key = { version = "0.6.7" }
 github_scraper = {path = "../github_scraper"}
 tokio = "1.45.1"
 serde_json = "1.0.140"
 clap = { version = "4.5.40", features = ["derive"] }
 serde = "1.0.219"
+plonky2 = { git = "https://github.com/0xPolygonZero/plonky2"}
+plonky2_field = "1.0.0"
