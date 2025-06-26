@@ -50,7 +50,6 @@ pub async fn parse_keys(all_data: &str) -> anyhow::Result<Vec<String>>{
 pub async fn get_and_process_username(username : String) -> anyhow::Result<Vec<Vec<u8>>> {
     let address = format!("{}{}{}", "https://github.com/", username, ".keys");
     let mut result : Vec<Vec<u8>> = Vec::new();
-    println!("{}", address);
     match get(&address).await {
         Ok(response) => {
             if response.status().is_success() {
@@ -83,11 +82,18 @@ pub async fn get_all_users(list_usernames: Vec<String>) -> anyhow::Result<Vec<Ve
     let mut sorted_usernames: Vec<String> = list_usernames.clone();
     sorted_usernames.sort();
     for username in sorted_usernames{
-        let keys = get_and_process_username(username.clone()).await?;
-        println!("username {username:?} is processed");
-        for key in keys{
-            result.push(key);
-        }
+        match get_and_process_username(username.clone()).await {
+            Ok(keys) => {
+                println!("username {username:?} is processed");
+                for key in keys{
+                    result.push(key);
+                }
+            },
+            Err(e) => {
+                println!("Failed to process username {:?}, please check spelling", username);
+            }
+        };
+       
     }
     if result.len() > MAX_GROUP_SIZE {
         return Err(anyhow!("Too many keys in the group. Maximum is {MAX_GROUP_SIZE}."));

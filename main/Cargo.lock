@@ -1218,6 +1218,7 @@ dependencies = [
  "plonky2",
  "plonky2_field 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "pod2",
+ "reqwest",
  "serde",
  "serde_json",
  "ssh-key",

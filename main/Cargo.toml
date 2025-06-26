@@ -14,3 +14,4 @@ clap = { version = "4.5.40", features = ["derive"] }
 serde = "1.0.219"
 plonky2 = { git = "https://github.com/0xPolygonZero/plonky2"}
 plonky2_field = "1.0.0"
+reqwest = "0.12.20"
