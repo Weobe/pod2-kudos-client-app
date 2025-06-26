@@ -13,7 +13,6 @@ use pod2::{self,
     middleware::{
         VDSet,
         Params,
-        Pod,
         PodId,
         RecursivePod,
         Value,
@@ -187,11 +186,11 @@ fn create_group_mainpod(usernames: Vec<String>, pub_keys: Vec<Vec<u8>>, message:
 
     println!("Group Signature Pod created and written to file successfully!");
 
-    Ok((main_pod))
+    Ok(main_pod)
 }
 
 
-fn get_group_pod() -> Result<MainPod> {
+fn _get_group_pod() -> Result<MainPod> {
     //sanity check
     let mut read_file = File::open("group_pod.json").expect("Failed to open file");
     let mut group_pod_str = String::new();
@@ -209,7 +208,7 @@ struct Args {
     manual: bool,
     #[arg(short, long)]
     // regenerate group pod
-    generate_new_pod: bool
+    generate: bool
 }
 
 
@@ -247,15 +246,18 @@ async fn main() {
     io::stdin().read_line(&mut message)
         .expect("Failed to read line");
     let message = message.trim().to_string();
-
+    if cli.generate{
+        println!("Creating new RSA Pod...");
+        create_rsa_pod().expect("Failed to create an RSA Pod. Check that your signature is valid and matches the namespace and double-blind message")
+    }
     println!("Generating new Group Signature Pod...\n");
-    let main_pod = create_group_mainpod(group_list.clone(), pks, "Hello".to_string())
+    let main_pod = create_group_mainpod(group_list.clone(), pks, message)
         .expect(&format!("Failed to create Group Signature Pod. Please check that the signature is created with your GitHub key and that your username is in the list of usernames: {:?}", group_list));
     let main_pod_str = serde_json::to_string(&main_pod).expect("Failed to serialize MainPod to JSON");
 
 
     let client = reqwest::Client::new();
-    let res = client.post("http://localhost:8080")
+    let _res = client.post("http://localhost:8080")
         .body(main_pod_str)
         .send()
         .await.expect("Failed to send request");

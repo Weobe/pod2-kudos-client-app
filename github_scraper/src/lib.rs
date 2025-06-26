@@ -89,7 +89,7 @@ pub async fn get_all_users(list_usernames: Vec<String>) -> anyhow::Result<Vec<Ve
                     result.push(key);
                 }
             },
-            Err(e) => {
+            Err(_) => {
                 println!("Failed to process username {:?}, please check spelling", username);
             }
         };
