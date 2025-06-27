@@ -3,4 +3,4 @@
 # Exit on error
 set -e
 
-cargo run -- "$@"
+cargo run --release -- "$@"

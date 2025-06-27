@@ -77,17 +77,18 @@ pub async fn get_and_process_username(username : String) -> anyhow::Result<Vec<V
     }
 }
 
-pub async fn get_all_users(list_usernames: Vec<String>) -> anyhow::Result<Vec<Vec<u8>>> {
+pub async fn get_all_users(list_usernames: Vec<String>) -> anyhow::Result<(Vec<Vec<u8>>, Vec<String>)> {
     let mut result: Vec<Vec<u8>> = Vec::new();
     let mut sorted_usernames: Vec<String> = list_usernames.clone();
     sorted_usernames.sort();
+    let mut valid_usernames: Vec<String> = Vec::new();
     for username in sorted_usernames{
         match get_and_process_username(username.clone()).await {
             Ok(keys) => {
-                println!("username {username:?} is processed");
                 for key in keys{
                     result.push(key);
                 }
+                valid_usernames.push(username);
             },
             Err(_) => {
                 println!("Failed to process username {:?}, please check spelling", username);
@@ -102,5 +103,5 @@ pub async fn get_all_users(list_usernames: Vec<String>) -> anyhow::Result<Vec<Ve
         .map_err(|e| anyhow!("Failed to create file: {e}"))?;
     file.write(format!("{result:?}").as_bytes())
         .map_err(|e| anyhow!("Failed to write to file: {e}"))?;
-    return Ok(result);
+    return Ok((result, valid_usernames));
 }

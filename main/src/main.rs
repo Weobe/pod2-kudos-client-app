@@ -31,7 +31,6 @@ use pod2::{self,
         MainPodBuilder,
         MainPod
     },
-    timed,
     op
 };
 use ssh_key::{
@@ -87,10 +86,7 @@ fn create_rsa_pod() -> Result<()> {
     let namespace = "double-blind.xyz";
     let sig = SshSig::from_pem(include_bytes!("../signature/github_rsa.sig")).unwrap();
 
-    let rsa_pod = timed!(
-        "RsaPod::new",
-        RsaPod::new_boxed(&params, &vdset.clone(), msg, &sig, namespace).unwrap()
-    );
+    let rsa_pod = RsaPod::new_boxed(&params, &vdset.clone(), msg, &sig, namespace).unwrap();
     print!("RSA Pod created successfully!\n");
     let mut pod_file = File::create("rsa_pod.json").expect("Failed to create file");
     pod_file.write(rsa_pod.serialize_data().to_string().as_bytes()).expect("Failed to write to file");
@@ -151,28 +147,21 @@ fn create_group_mainpod(usernames: Vec<String>, pub_keys: Vec<Vec<u8>>, message:
     let mut pod_file = File::open("main_rsa_pod.json").expect("Failed to open file");
     let mut pod_data_str = String::new();
     pod_file.read_to_string(&mut pod_data_str).expect("Failed to read file");
-    let main_rsa_pod_serialized: SerializedMainPod = timed!(
-        "String to SerializedMainPod",
-        serde_json::from_str(&pod_data_str).expect("Failed to parse RSA Pod from file")
-    );
+    let main_rsa_pod_serialized: SerializedMainPod = serde_json::from_str(&pod_data_str).expect("Failed to parse RSA Pod from file");
     let vd_set = main_rsa_pod_serialized.vd_set;
     let params = main_rsa_pod_serialized.params;
     let data: serde_json::Value = main_rsa_pod_serialized.data;
     let pod_id: PodId = main_rsa_pod_serialized.id;
-    let pod = timed!(
-        "RsaPod Deserialize",
-        <RsaPod as RecursivePod>::deserialize_data(params.clone(), data, vd_set.clone(), pod_id).expect("Failed to deserialize Main Rsa Pod data")
-    );
+    let pod = <RsaPod as RecursivePod>::deserialize_data(params.clone(), data, vd_set.clone(), pod_id).expect("Failed to deserialize Main Rsa Pod data");
     let public_statements = pod.pub_statements();
     let main_rsa_pod: MainPod = MainPod{
         pod,
         public_statements,
         params : params.clone()
     };
-
-    //let params = main_rsa_pod.params.clone();
-   
+    
     let mut main_pod_builder = MainPodBuilder::new(&params.clone(), &vd_set.clone());
+
     main_pod_builder.add_recursive_pod(main_rsa_pod.clone());
 
     let mut list_of_signers : Vec<Value> = Vec::new();
@@ -192,10 +181,7 @@ fn create_group_mainpod(usernames: Vec<String>, pub_keys: Vec<Vec<u8>>, message:
     
     println!("Proving the group pod...");
     let mut prover = mainpod::Prover {};
-    let main_pod = timed!(
-        "main_pod_builder.prove",
-        main_pod_builder.prove(&mut prover, &params).unwrap()
-    );
+    let main_pod = main_pod_builder.prove(&mut prover, &params).unwrap();
 
     let group_pod_json = serde_json::to_string(&main_pod).expect("Failed to serialize MainPod to JSON");
     let mut group_pod_file = File::create("group_pod.json").expect("Failed to create file");
@@ -246,7 +232,7 @@ async fn main() {
             }
             group_list.push(username.to_string());
         }
-        println!("Group list: {:?}", group_list);
+        
         let mut file = File::create("group_list.json").expect("Failed to create file");
         let group_list_json = serde_json::to_string(&group_list).expect("Failed to serialize group list");
         file.write_all(group_list_json.as_bytes()).expect("Failed to write to file");
@@ -258,25 +244,23 @@ async fn main() {
         group_list = serde_json::from_str(&group_list_str).expect(format!("Failed to parse JSON {}", &group_list_str).as_str());
     }
 
-    let pks = get_all_users(group_list.clone()).await.unwrap();
+    let (pks, group_list) = get_all_users(group_list.clone()).await.unwrap();
+    println!("Group list: {:?}", group_list);
     println!("Message: ");
     let mut message = String::new();
     io::stdin().read_line(&mut message)
         .expect("Failed to read line");
     let message = message.trim().to_string();
     if cli.generate{
-        println!("Creating new RSA Pod...");
+        println!("\nCreating new RSA Pod...");
         create_rsa_pod().expect("Failed to create an RSA Pod. Check that your signature is valid and matches the namespace and double-blind message");
         println!("Creating new RSA Main Pod");
         create_rsa_main_pod().expect("Failed to create RSA Main Pod out of RSA Pod");
     }
-    println!("Generating new Group Signature Pod...\n");
+    println!("\nCreating new Group Signature Pod...");
 
-    let main_pod = timed!(
-        "Create Group Mainpod: ",
-        create_group_mainpod(group_list.clone(), pks, message)
-        .expect(&format!("Failed to create Group Signature Pod. Please check that the signature is created with your GitHub key and that your username is in the list of usernames: {:?}", group_list))
-    );
+    let main_pod = create_group_mainpod(group_list.clone(), pks, message)
+        .expect(&format!("Failed to create Group Signature Pod. Please check that the signature is created with your GitHub key and that your username is in the list of usernames: {:?}", group_list));
 
     let main_pod_str = serde_json::to_string(&main_pod).expect("Failed to serialize MainPod to JSON");
 
