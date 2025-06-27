@@ -44,7 +44,8 @@ use clap::Parser;
 use std::any::Any;
 use serde::{Deserialize, Serialize};
 use reqwest;
-
+use dotenvy::dotenv;
+use std::env;
 
 #[derive(Serialize, Deserialize, Debug)]
 struct RSAPodMetaData {
@@ -144,7 +145,7 @@ fn create_rsa_main_pod() -> Result<()> {
 
 
 fn create_group_mainpod(usernames: Vec<String>, pub_keys: Vec<Vec<u8>>, message: String) -> Result<MainPod> {
-    let mut pod_file = File::open("main_rsa_pod.json").expect("Failed to open file");
+    let mut pod_file = File::open("main_rsa_pod.json").expect("Failed to open file main_rsa_pod.json, please generate your RSA Main Pod for the first use by using option --generate \n");
     let mut pod_data_str = String::new();
     pod_file.read_to_string(&mut pod_data_str).expect("Failed to read file");
     let main_rsa_pod_serialized: SerializedMainPod = serde_json::from_str(&pod_data_str).expect("Failed to parse RSA Pod from file");
@@ -178,7 +179,7 @@ fn create_group_mainpod(usernames: Vec<String>, pub_keys: Vec<Vec<u8>>, message:
     let _user_names_statement = main_pod_builder.pub_op(op!(new_entry, "usernames", array_usernames)).expect("Failed to add usernames array");
     main_pod_builder.pub_op(op!(set_contains, public_keys_statement, (&main_rsa_pod, "rsa_pk"))).expect("Failed to add setContaints");
     main_pod_builder.pub_op(op!(new_entry, "message", Value::from(message))).expect("Failed to add message");
-    
+    main_pod_builder.pub_op(op!(copy, (&main_rsa_pod, "signed_msg"))).expect("Failed to add double-blind message");
     println!("Proving the group pod...");
     let mut prover = mainpod::Prover {};
     let main_pod = main_pod_builder.prove(&mut prover, &params).expect("Failed to prove group pod. Please check that your username is among the list of usernames provided");
@@ -218,6 +219,7 @@ struct Args {
 
 #[tokio::main]
 async fn main() {
+    dotenv().ok();
     let cli = Args::parse();
     let mut group_list: Vec<String> = Vec::new();
     if cli.manual {
@@ -238,7 +240,7 @@ async fn main() {
         file.write_all(group_list_json.as_bytes()).expect("Failed to write to file");
         println!("Group list written to file successfully!");
     } else{
-        let mut file= File::open("group_list.json").expect("Failed to open file");
+        let mut file= File::open("group_list.json").expect("Please generate your group list by using the option --manual \n");
         let mut group_list_str = String::new();
         file.read_to_string(&mut group_list_str).expect("Failed to read file");
         group_list = serde_json::from_str(&group_list_str).expect(format!("Failed to parse JSON {}", &group_list_str).as_str());
@@ -272,9 +274,10 @@ async fn main() {
 
     let main_pod_str = serde_json::to_string(&main_pod).expect("Failed to serialize MainPod to JSON");
 
-
+     let api_url = env::var("API_URL")
+        .unwrap_or_else(|_| "http://127.0.0.1:8080".to_owned());
     let client = reqwest::Client::new();
-    let _res = client.post("http://localhost:8080")
+    let _res = client.post(api_url)
         .body(main_pod_str)
         .send()
         .await.expect("Failed to send request");
