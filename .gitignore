@@ -26,5 +26,6 @@ main/output.txt
 main/group_keys.txt
 Now
 .cursor/
+main/*.json
 Add an Emoji, Sticker, or GIF
 send-request/

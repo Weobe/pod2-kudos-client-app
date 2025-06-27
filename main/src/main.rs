@@ -79,14 +79,14 @@ fn create_rsa_pod() -> Result<()> {
             .clone(),
         introduction_pods::rsapod::STANDARD_RSA_POD_DATA.1.verifier_only.clone(),
     ];
-    let vdset = VDSet::new(params.max_depth_mt_vds, &vds).unwrap();
+    let vdset = VDSet::new(params.max_depth_mt_vds, &vds).expect("Failed to create vd_set for RSA pod");
 
     // Use the sample data from plonky2_rsa
-    let msg = "0xPARC";
+    let msg = "0xPARC-double-blind";
     let namespace = "double-blind.xyz";
-    let sig = SshSig::from_pem(include_bytes!("../signature/github_rsa.sig")).unwrap();
+    let sig = SshSig::from_pem(include_bytes!("../signature/github_rsa.sig")).expect("Could not find signature file ../signature/github_rsa.sig. Please follow the instructions at https://github.com/Weobe/pod2-kudos-client-app/blob/main/README.md for creating your double-blind signature");
 
-    let rsa_pod = RsaPod::new_boxed(&params, &vdset.clone(), msg, &sig, namespace).unwrap();
+    let rsa_pod = RsaPod::new_boxed(&params, &vdset.clone(), msg, &sig, namespace).expect("Could not verify RSA signature. Please follow the instructions at https://github.com/Weobe/pod2-kudos-client-app/blob/main/README.md for creating your double-blind signature");
     print!("RSA Pod created successfully!\n");
     let mut pod_file = File::create("rsa_pod.json").expect("Failed to create file");
     pod_file.write(rsa_pod.serialize_data().to_string().as_bytes()).expect("Failed to write to file");
@@ -96,7 +96,7 @@ fn create_rsa_pod() -> Result<()> {
         vds_root : vdset.clone(),
         id : rsa_pod.id().clone(),
     };
-    metadata_file.write(serde_json::to_string(&meta_data).unwrap().as_bytes()).expect("Failed to write to file");
+    metadata_file.write(serde_json::to_string(&meta_data).expect("Failed to serialize metadata").as_bytes()).expect("Failed to write to file");
     println!("RSA Pod and VDSet written to files successfully!\n");
 
     Ok(())
@@ -127,7 +127,7 @@ fn create_rsa_main_pod() -> Result<()> {
     let main_rsa_pod = pod2::frontend::MainPod {
         pod: (rsa_pod.clone() as Box<dyn Any>)
             .downcast::<RsaPod>()
-            .unwrap(),
+            .expect("Failed to downcast RsaPod"),
         public_statements: rsa_pod.pub_statements(),
         params: params.clone(),
     };
@@ -181,7 +181,7 @@ fn create_group_mainpod(usernames: Vec<String>, pub_keys: Vec<Vec<u8>>, message:
     
     println!("Proving the group pod...");
     let mut prover = mainpod::Prover {};
-    let main_pod = main_pod_builder.prove(&mut prover, &params).unwrap();
+    let main_pod = main_pod_builder.prove(&mut prover, &params).expect("Failed to prove group pod. Please check that your username is among the list of usernames provided");
 
     let group_pod_json = serde_json::to_string(&main_pod).expect("Failed to serialize MainPod to JSON");
     let mut group_pod_file = File::create("group_pod.json").expect("Failed to create file");
@@ -244,7 +244,15 @@ async fn main() {
         group_list = serde_json::from_str(&group_list_str).expect(format!("Failed to parse JSON {}", &group_list_str).as_str());
     }
 
-    let (pks, group_list) = get_all_users(group_list.clone()).await.unwrap();
+    let (pks, group_list) = match get_all_users(group_list.clone()).await {
+        Ok((pks, group_list)) => {
+            (pks, group_list)
+        },
+        Err(e) => {
+            println!("Failed to fetch user public keys from GitHub: {e}");
+            return;
+        }
+    };
     println!("Group list: {:?}", group_list);
     println!("Message: ");
     let mut message = String::new();
@@ -270,4 +278,5 @@ async fn main() {
         .body(main_pod_str)
         .send()
         .await.expect("Failed to send request");
+    return;
 }
