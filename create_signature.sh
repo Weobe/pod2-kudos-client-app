@@ -1,0 +1,1 @@
+ssh-keygen -Y sign -n double-blind.xyz -f ~/.ssh/github > signature/github_rsa.sig
