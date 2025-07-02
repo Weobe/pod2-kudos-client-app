@@ -17,7 +17,7 @@ cd pod2-kudos-client-app
 
 When prompted, enter your passkey (if any) and then type `0xPARC-double-blind` in the standard input. To finish, press Ctrl+D / Control+D twice without pressing Enter (Pressing Enter adds a new line to the input which would change the text you are signing) 
 
-4. Place `github_rsa.sig` under `main/signature/github_rsa.sig` (Or just paste it in the existing file)
+4. Place `github_rsa.sig` under `pod2-kudos-client-app/main/signature/github_rsa.sig` (Or just paste it in the existing file)
 
 5. Add the 0xPARC server URL to `main/.env` `API_URL=http://192.168.0.225:8080`
    
