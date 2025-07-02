@@ -19,7 +19,7 @@ When prompted, enter your passkey (if any) and then type `0xPARC-double-blind` i
 
 4. Place `github_rsa.sig` under `pod2-kudos-client-app/main/signature/github_rsa.sig` (Or just paste it in the existing file)
 
-5. Add the 0xPARC server URL to `main/.env` `API_URL=http://192.168.0.225:8080`
+5. Add the 0xPARC server URL to `pod2-kudos-client-app/main/.env` `API_URL=http://192.168.0.225:8080`
    
 6. run `init.sh` under `main` directory
 ```
