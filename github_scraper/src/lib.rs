@@ -30,7 +30,6 @@ pub async fn parse_keys(all_data: &str) -> anyhow::Result<Vec<String>>{
     let key_list: Vec<&str> = all_data.trim().split("ssh-").collect();
     let mut result : Vec<String> = Vec::new();
     for key in key_list{
-        println!("key: {key}");
         if key != ""{
             let parts: Vec<&str> = key.trim().split_whitespace().collect();
             if parts.len() < 2 {
