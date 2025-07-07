@@ -12,20 +12,28 @@ cd pod2-kudos-client-app
 2. Add an RSA-4096 Key to your GitHub account following the instructions in this link: https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account
 3. Create a signature of the text `0xPARC-double-blind` in namespace `double-blind.xyz` with your GitHub private key using this command:
    ```
-   ssh-keygen -Y sign -n double-blind.xyz  -f <PATH_TO_YOUR_GITHUB_KEY> > github_rsa.sig
+   echo -n "0xPARC-double-blind" | ssh-keygen -Y sign -n double-blind.xyz  -f <PATH_TO_YOUR_GITHUB_KEY> > github_rsa.sig
    ```
 
-When prompted, enter your passkey (if any) and then type `0xPARC-double-blind` in the standard input. To finish, press Ctrl+D / Control+D twice without pressing Enter (Pressing Enter adds a new line to the input which would change the text you are signing) 
+When prompted, enter your passkey (if any)
 
 4. Place `github_rsa.sig` under `pod2-kudos-client-app/main/signature/github_rsa.sig` (Or just paste it in the existing file)
 
+  ```
+  cp github_rsa.sig main/signature/github_rsa.sig
+  ```
+
 5. Add the 0xPARC server URL to `pod2-kudos-client-app/main/.env` `API_URL=http://192.168.0.225:8080`
-   
+
+  ```
+  echo "API_URL=http://192.168.0.225:8080" > main/.env
+  ```
 6. run `init.sh` under `main` directory
 ```
 cd main
 bash init.sh
 ```
+This will add a new command in ~/bin and add it to your path.  You may need to restart your terminal or source your RC file, e.g. `source ~/.zshrc` to update the PATH.
 
 # Usage:
 
