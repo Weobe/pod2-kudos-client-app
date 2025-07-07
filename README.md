@@ -17,12 +17,13 @@ cd pod2-kudos-client-app
 
 When prompted, enter your passkey (if any) and then type `0xPARC-double-blind` in the standard input. To finish, press Ctrl+D / Control+D twice without pressing Enter (Pressing Enter adds a new line to the input which would change the text you are signing) 
 
-4. Place `github_rsa.sig` under `main/signature/github_rsa.sig` (Or just paste it in the existing file)
+4. Place `github_rsa.sig` under `pod2-kudos-client-app/main/signature/github_rsa.sig` (Or just paste it in the existing file)
 
-5. Add the 0xPARC server URL to `main/.env`  `http://192.168.0.225:8080`
+5. Add the 0xPARC server URL to `pod2-kudos-client-app/main/.env` `API_URL=http://192.168.0.225:8080`
    
-6. run `init.sh`
+6. run `init.sh` under `main` directory
 ```
+cd main
 bash init.sh
 ```
 
@@ -35,4 +36,8 @@ send-pod-kudos
 Message: <Your Message>
 ```
 
-For your first usage, please run it with options `send-pod-kudos --generate --manual` to configure your RSA Double Blind Pod and list of users in your group signature.
+NOTE: For your first usage, please run it with options `send-pod-kudos --generate` to configure your RSA Double Blind Pod.
+
+To change the list of users in your group signature, run with option `--manual` and enter list of users manually. Alternatively, you can edit `main/group_list.json` directly.
+
+
