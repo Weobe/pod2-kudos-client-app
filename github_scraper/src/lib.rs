@@ -23,9 +23,6 @@ pub async fn extract_rsa_from_ssh(ssh_key: &str) -> anyhow::Result<Vec<u8>> {
             pk.n.as_positive_bytes()
                 .expect("Public key was negative")
                 .to_vec();
-    if pk_bytes.len() != RSA_BYTE_SIZE {
-        return Err(anyhow!("Public key was not the correct size"));
-    }
     Ok(pk_bytes)
 }
 
@@ -33,6 +30,7 @@ pub async fn parse_keys(all_data: &str) -> anyhow::Result<Vec<String>>{
     let key_list: Vec<&str> = all_data.trim().split("ssh-").collect();
     let mut result : Vec<String> = Vec::new();
     for key in key_list{
+        println!("key: {key}");
         if key != ""{
             let parts: Vec<&str> = key.trim().split_whitespace().collect();
             if parts.len() < 2 {
@@ -58,7 +56,10 @@ pub async fn get_and_process_username(username : String) -> anyhow::Result<Vec<V
                         let list_keys = parse_keys(&body).await?;
                         for key in list_keys{
                             let extracted_key = extract_rsa_from_ssh(&key).await?;
-                            result.push(extracted_key);
+                            //adds only rsa4096 keys
+                            if extracted_key.len() == RSA_BYTE_SIZE {
+                                result.push(extracted_key);
+                            }
                         }
                         return Ok(result);
                     },
