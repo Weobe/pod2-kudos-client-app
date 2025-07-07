@@ -91,8 +91,8 @@ pub async fn get_all_users(list_usernames: Vec<String>) -> anyhow::Result<(Vec<V
                 }
                 valid_usernames.push(username);
             },
-            Err(_) => {
-                println!("Failed to process username {:?}, please check spelling", username);
+            Err(err) => {
+                println!("Failed to process username {username}, please check spelling - {err}");
             }
         };
        
@@ -101,8 +101,8 @@ pub async fn get_all_users(list_usernames: Vec<String>) -> anyhow::Result<(Vec<V
         return Err(anyhow!("Too many keys in the group. Maximum is {MAX_GROUP_SIZE}."));
     }
     let mut file = File::create("group_keys.txt")
-        .map_err(|e| anyhow!("Failed to create file: {e}"))?;
+        .map_err(|e| anyhow!("Failed to create group_keys.txt file: {e}"))?;
     file.write(format!("{result:?}").as_bytes())
-        .map_err(|e| anyhow!("Failed to write to file: {e}"))?;
+        .map_err(|e| anyhow!("Failed to write to group_keys.txt file: {e}"))?;
     return Ok((result, valid_usernames));
 }

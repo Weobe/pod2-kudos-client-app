@@ -3,4 +3,4 @@
 # Exit on error
 set -e
 
-sudo cargo run --release -- "$@"
+cargo run --release -- "$@"
